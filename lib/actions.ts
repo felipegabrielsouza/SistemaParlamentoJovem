@@ -92,17 +92,23 @@ export async function createProposalAction(parliamentarianId: string, formData: 
   const subject = formData.get('subject') as string
   const summary = formData.get('summary') as string
 
-  if (!type || !subject || !summary) return { error: 'Todos os campos são obrigatórios.' }
+  if (!type || !subject || !summary) {
+    redirect('/parlamentar/nova-proposta?error=Todos os campos sao obrigatorios.')
+  }
 
-  await prisma.proposal.create({
-    data: {
-      parliamentarianId,
-      type,
-      subject,
-      summary,
-      status: 'Recebida'
-    }
-  })
+  try {
+    await prisma.proposal.create({
+      data: {
+        parliamentarianId,
+        type,
+        subject,
+        summary,
+        status: 'Recebida'
+      }
+    })
+  } catch (error) {
+    redirect('/parlamentar/nova-proposta?error=Erro ao salvar a proposta no banco de dados.')
+  }
   
   redirect('/parlamentar/minhas-propostas?success=true')
 }
