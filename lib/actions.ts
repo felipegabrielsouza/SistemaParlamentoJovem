@@ -105,7 +105,7 @@ export async function formalizeProposalAction(proposalId: string, formData: Form
   const number = formData.get('number') as string
 
   if (!sessionId || !number) {
-    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Sessão e Número são obrigatórios.`)
+    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Sessao e Numero sao obrigatorios.`)
   }
 
   try {
@@ -119,7 +119,7 @@ export async function formalizeProposalAction(proposalId: string, formData: Form
       }
     })
   } catch (error) {
-    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Erro ao formalizar. O número da propositura pode já estar em uso.`)
+    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Erro ao formalizar. O numero da propositura pode ja estar em uso.`)
   }
 
   redirect('/admin/proposituras/cadastradas?success=true')
