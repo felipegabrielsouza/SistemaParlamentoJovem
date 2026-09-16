@@ -4,7 +4,13 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 
-export default async function FormalizarProposta({ params }: { params: { id: string } }) {
+export default async function FormalizarProposta({ 
+  params, 
+  searchParams 
+}: { 
+  params: { id: string }, 
+  searchParams: { error?: string } 
+}) {
   const proposal = await prisma.proposal.findUnique({
     where: { id: params.id },
     include: { parliamentarian: true }
@@ -21,6 +27,12 @@ export default async function FormalizarProposta({ params }: { params: { id: str
         <ArrowLeft size={16} /> <span>Voltar</span>
       </Link>
       
+      {searchParams.error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-200 text-sm font-medium">
+          {searchParams.error}
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 space-y-6">
           <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">

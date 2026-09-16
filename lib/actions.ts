@@ -100,22 +100,27 @@ export async function createProposalAction(parliamentarianId: string, formData: 
   
   redirect('/parlamentar/minhas-propostas?success=true')
 }
-
 export async function formalizeProposalAction(proposalId: string, formData: FormData) {
   const sessionId = formData.get('sessionId') as string
   const number = formData.get('number') as string
 
-  if (!sessionId || !number) return { error: 'Sessão e Número são obrigatórios.' }
+  if (!sessionId || !number) {
+    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Sessão e Número são obrigatórios.`)
+  }
 
-  await prisma.proposal.update({
-    where: { id: proposalId },
-    data: {
-      sessionId,
-      number,
-      status: 'Cadastrada',
-      formalizedAt: new Date()
-    }
-  })
+  try {
+    await prisma.proposal.update({
+      where: { id: proposalId },
+      data: {
+        sessionId,
+        number,
+        status: 'Cadastrada',
+        formalizedAt: new Date()
+      }
+    })
+  } catch (error) {
+    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Erro ao formalizar. O número da propositura pode já estar em uso.`)
+  }
 
   redirect('/admin/proposituras/cadastradas?success=true')
 }
