@@ -57,8 +57,8 @@ export async function createParliamentarianAction(formData: FormData) {
       }
     })
   } catch (error) {
-    // Retorna a URL com erro via parâmetro de busca para evitar incompatibilidade no tipo da action
-    redirect('/admin/parlamentares/novo?error=Usuário ou e-mail já cadastrado.')
+    // Redireciona de volta para a tela de cadastro passando o erro via URL
+    redirect('/admin/parlamentares/novo?error=Erro ao cadastrar. O nome de usuario ou e-mail ja pode estar em uso.')
   }
 
   redirect('/admin/parlamentares?success=true')
