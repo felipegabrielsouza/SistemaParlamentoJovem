@@ -10,13 +10,19 @@ export async function loginAction(formData: FormData) {
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
-  if (!username || !password) return { error: 'Preencha todos os campos.' }
+  if (!username || !password) {
+    redirect('/login?error=Preencha todos os campos.')
+  }
 
   const user = await prisma.user.findUnique({ where: { username } })
-  if (!user || !user.active) return { error: 'Usuário inválido ou inativo.' }
+  if (!user || !user.active) {
+    redirect('/login?error=Usuario invalido ou inativo.')
+  }
 
   const isValid = await bcrypt.compare(password, user.passwordHash)
-  if (!isValid) return { error: 'Senha incorreta.' }
+  if (!isValid) {
+    redirect('/login?error=Senha incorreta.')
+  }
 
   const token = await createToken({ userId: user.id, role: user.role })
   cookies().set('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 86400, path: '/' })
