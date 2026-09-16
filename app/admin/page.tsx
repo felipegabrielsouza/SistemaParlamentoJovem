@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/db'
 import { FileText, Users, Calendar, CheckCircle } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminDashboard() {
   const totalParlamentares = await prisma.parliamentarian.count()
   const totalRecebidas = await prisma.proposal.count({ where: { status: 'Recebida' } })

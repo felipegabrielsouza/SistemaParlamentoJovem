@@ -1,5 +1,7 @@
 import { prisma } from '@/lib/db'
 
+export const dynamic = 'force-dynamic'
+
 export default async function PropositurasSessao() {
   const proposituras = await prisma.proposal.findMany({
     where: { status: 'Cadastrada' },

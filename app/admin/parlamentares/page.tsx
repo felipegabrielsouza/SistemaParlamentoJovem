@@ -2,6 +2,8 @@ import { prisma } from '@/lib/db'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ParlamentaresList({ searchParams }: { searchParams: { success?: string } }) {
   const list = await prisma.parliamentarian.findMany({ include: { user: true } })
 
