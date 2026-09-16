@@ -1,0 +1,65 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  username      String   @unique
+  email         String?  @unique
+  passwordHash  String
+  role          String   @default("PARLAMENTAR") // ADMIN ou PARLAMENTAR
+  active        Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  parliamentarian Parliamentarian?
+}
+
+model Parliamentarian {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id])
+  fullName  String
+  school    String
+  className String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  proposals Proposal[]
+}
+
+model Session {
+  id          String   @id @default(cuid())
+  number      Int
+  title       String
+  description String?
+  date        DateTime
+  status      String   @default("Aberta") // Aberta, Encerrada, Arquivada
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  proposals   Proposal[]
+}
+
+model Proposal {
+  id                 String   @id @default(cuid())
+  parliamentarianId  String
+  parliamentarian    Parliamentarian @relation(fields: [parliamentarianId], references: [id])
+  type               String
+  subject            String
+  summary            String   @db.Text
+  status             String   @default("Recebida") // Recebida, Em análise, Cadastrada, Arquivada
+  createdAt          DateTime @default(now()) // Data original de envio
+  updatedAt          DateTime @updatedAt
+
+  // Campos preenchidos na formalização (Propositura)
+  sessionId          String?
+  session            Session? @relation(fields: [sessionId], references: [id])
+  number             String?  @unique
+  formalizedAt       DateTime?
+}
