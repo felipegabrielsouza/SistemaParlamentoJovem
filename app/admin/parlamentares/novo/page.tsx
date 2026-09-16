@@ -1,10 +1,16 @@
 import { createParliamentarianAction } from '@/lib/actions'
 
-export default function NovoParlamentar() {
+export default function NovoParlamentar({ searchParams }: { searchParams: { error?: string } }) {
   return (
     <div className="max-w-2xl mx-auto">
       <h1 className="text-2xl font-bold text-gray-800 mb-6">Cadastrar Jovem Parlamentar</h1>
       
+      {searchParams.error && (
+        <div className="bg-red-50 text-red-600 p-4 rounded-lg mb-6 border border-red-200 text-sm font-medium">
+          {searchParams.error}
+        </div>
+      )}
+
       <form action={createParliamentarianAction} className="bg-white p-8 rounded-xl shadow-sm border border-gray-200 space-y-6">
         <div className="grid grid-cols-1 gap-6">
           <div>
