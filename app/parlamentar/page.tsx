@@ -14,7 +14,7 @@ export default async function ParlamentarDashboard() {
     <div>
       <div className="bg-white rounded-2xl p-8 shadow-sm border border-gray-100 mb-8 flex flex-col md:flex-row items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Olá, {user?.parliamentarian?.fullName.split(' ')[0]}!</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">Olá, {user?.parliamentarian?.name.split(' ')[0]}!</h1>
           <p className="text-gray-500">Bem-vindo(a) ao sistema do Parlamento Jovem de Mococa.</p>
         </div>
         <Link href="/parlamentar/nova-proposta" className="mt-6 md:mt-0 bg-parlamento-600 hover:bg-parlamento-700 text-white px-6 py-3 rounded-xl font-bold flex items-center space-x-2 shadow-md transition">
