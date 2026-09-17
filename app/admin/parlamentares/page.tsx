@@ -34,11 +34,12 @@ export default async function ParlamentaresList({ searchParams }: { searchParams
                 <td className="p-4 font-medium text-gray-800">{p.name}</td>
                 <td className="p-4 text-gray-600">{p.school}</td>
                 <td className="p-4 text-gray-600">{p.user.username}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 text-xs font-semibold rounded-full ${p.user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    {p.user.active ? 'Ativo' : 'Inativo'}
-                  </span>
-                </td>
+                // Altere o bloco da coluna de status/ativo para algo simples como:
+<td className="p-4">
+  <span className="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+    Ativo
+  </span>
+</td>
               </tr>
             ))}
             {list.length === 0 && (
