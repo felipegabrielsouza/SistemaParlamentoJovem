@@ -5,8 +5,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function AdminDashboard() {
   const totalParlamentares = await prisma.parliamentarian.count()
-  const totalRecebidas = await prisma.proposal.count({ where: { status: 'Recebida' } })
-  const totalCadastradas = await prisma.proposal.count({ where: { status: 'Cadastrada' } })
+  const totalRecebidas = await prisma.proposal.count({ where: { status: 'PENDENTE' } })
+const totalCadastradas = await prisma.proposal.count({ where: { status: 'PROTOCOLADA' } })
   const sessoes = await prisma.session.count()
 
   return (
