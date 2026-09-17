@@ -24,7 +24,6 @@ export default async function ParlamentaresList({ searchParams }: { searchParams
             <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
               <th className="p-4 font-medium">Nome</th>
               <th className="p-4 font-medium">Escola</th>
-              <th className="p-4 font-medium">Turma</th>
               <th className="p-4 font-medium">Usuário</th>
               <th className="p-4 font-medium">Status</th>
             </tr>
@@ -34,7 +33,6 @@ export default async function ParlamentaresList({ searchParams }: { searchParams
               <tr key={p.id} className="hover:bg-gray-50">
                 <td className="p-4 font-medium text-gray-800">{p.fullName}</td>
                 <td className="p-4 text-gray-600">{p.school}</td>
-                <td className="p-4 text-gray-600">{p.className}</td>
                 <td className="p-4 text-gray-600">{p.user.username}</td>
                 <td className="p-4">
                   <span className={`px-2 py-1 text-xs font-semibold rounded-full ${p.user.active ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>

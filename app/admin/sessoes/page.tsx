@@ -1,38 +1,71 @@
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
-import { Plus } from 'lucide-react'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
+export default async function SessoesAdminPage() {
+  const sessions = await prisma.session.findMany({
+    orderBy: { number: 'desc' },
+    include: { _count: { select: { proposals: true } } }
+  })
 
-export default async function SessoesList({ searchParams }: { searchParams: { success?: string } }) {
-  const sessoes = await prisma.session.findMany({ orderBy: { date: 'desc' } })
+  async function deleteSession(formData: FormData) {
+    'use server'
+    const id = formData.get('id') as string
+    await prisma.session.delete({ where: { id } })
+    redirect('/admin/sessoes')
+  }
 
   return (
-    <div>
+    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow mt-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Sessões Plenárias</h1>
-        <Link href="/admin/sessoes/nova" className="bg-mococa-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-mococa-700 flex items-center space-x-2">
-          <Plus size={18} /> <span>Nova Sessão</span>
+        <h1 className="text-2xl font-bold text-gray-800">Gerenciamento de Sessões</h1>
+        <Link 
+          href="/admin/sessoes/nova" 
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm font-medium"
+        >
+          + Nova Sessão
         </Link>
       </div>
 
-      {searchParams.success && <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 border border-green-200">Sessão criada com sucesso!</div>}
+      {sessions.length === 0 ? (
+        <p className="text-gray-500">Nenhuma sessão cadastrada ainda.</p>
+      ) : (
+        <div className="space-y-4">
+          {sessions.map((s) => (
+            <div key={s.id} className="border border-gray-200 p-4 rounded-md flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+              <div>
+                <span className="inline-block px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-semibold rounded mb-1">
+                  Sessão #{s.number}
+                </span>
+                <h3 className="font-bold text-gray-800 text-lg">{s.title}</h3>
+                <p className="text-sm text-gray-600">
+                  Data: {new Date(s.date).toLocaleDateString('pt-BR')} | Propostas vinculadas: {s._count.proposals}
+                </p>
+              </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {sessoes.map(s => (
-          <div key={s.id} className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <div className="flex justify-between items-start mb-4">
-              <h3 className="font-bold text-lg text-gray-800">{s.number}ª {s.title}</h3>
-              <span className={`px-2 py-1 text-xs font-semibold rounded-full ${s.status === 'Aberta' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
-                {s.status}
-              </span>
+              <div className="flex items-center gap-2">
+                <Link 
+                  href={`/admin/sessoes/${s.id}/editar`}
+                  className="bg-gray-100 text-gray-700 px-3 py-1.5 rounded text-xs font-medium hover:bg-gray-200"
+                >
+                  Editar
+                </Link>
+
+                <form action={deleteSession}>
+                  <input type="hidden" name="id" value={s.id} />
+                  <button 
+                    type="submit" 
+                    className="bg-red-50 text-red-600 px-3 py-1.5 rounded text-xs font-medium hover:bg-red-100"
+                    onClick={(e) => { if(!confirm('Tem certeza que deseja excluir esta sessão?')) e.preventDefault(); }}
+                  >
+                    Excluir
+                  </button>
+                </form>
+              </div>
             </div>
-            <p className="text-gray-600 text-sm mb-2">{s.date.toLocaleDateString('pt-BR')}</p>
-            <p className="text-gray-500 text-sm">{s.description || 'Sem descrição'}</p>
-          </div>
-        ))}
-        {sessoes.length === 0 && <p className="text-gray-500">Nenhuma sessão criada.</p>}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

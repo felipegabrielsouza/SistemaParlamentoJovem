@@ -1,94 +1,135 @@
-import { prisma } from '@/lib/db'
-import { formalizeProposalAction } from '@/lib/actions'
+import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { writeFile } from 'fs/promises'
+import path from 'path'
 
-export default async function FormalizarProposta({ 
-  params, 
-  searchParams 
-}: { 
-  params: { id: string }, 
-  searchParams: { error?: string } 
-}) {
+interface PageProps {
+  params: Promise<{ id: string }>
+}
+
+export default async function AnalisarPropostaPage({ params }: PageProps) {
+  const { id } = await params
+
   const proposal = await prisma.proposal.findUnique({
-    where: { id: params.id },
-    include: { parliamentarian: true }
+    where: { id },
+    include: { parliamentarian: true, session: true }
   })
 
   if (!proposal) redirect('/admin/proposituras/recebidas')
 
-  const sessoes = await prisma.session.findMany({ where: { status: 'Aberta' }, orderBy: { date: 'asc' } })
-  const formalize = formalizeProposalAction.bind(null, proposal.id)
+  const sessions = await prisma.session.findMany({
+    orderBy: { number: 'desc' }
+  })
+
+  async function protocolarProposta(formData: FormData) {
+    'use server'
+    const sessionId = formData.get('sessionId') as string
+    const officialEmenta = formData.get('officialEmenta') as string
+    const pdfFile = formData.get('pdfFile') as File
+
+    // 1. Gerar numeração automática e sequencial por tipo
+    const typePrefixMap: Record<string, string> = {
+      INDICACAO: 'IND',
+      REQUERIMENTO: 'REQ',
+      PROJETO_LEI: 'PL'
+    }
+    const prefix = typePrefixMap[proposal.type] || 'PROP'
+
+    // Conta quantas propostas já foram protocoladas desse mesmo tipo para gerar o sequencial único
+    const count = await prisma.proposal.count({
+      where: { 
+        type: proposal.type,
+        status: 'PROTOCOLADA'
+      }
+    })
+    const currentYear = new Date().getFullYear()
+    const sequenceNumber = String(count + 1).padStart(3, '0')
+    const protocolNumber = `${prefix}-${sequenceNumber}/${currentYear}`
+
+    // 2. Lidar com o Upload do PDF (se fornecido)
+    let pdfUrl: string | null = null
+    let pdfPending = true
+
+    if (pdfFile && pdfFile.size > 0) {
+      const bytes = await pdfFile.arrayBuffer()
+      const buffer = Buffer.from(bytes)
+      const filename = `${protocolNumber.replace(/[/]/g, '-')}-${Date.now()}.pdf`
+      const uploadDir = path.join(process.cwd(), 'public/uploads')
+      
+      // Salva na pasta pública do Next.js
+      await writeFile(path.join(uploadDir, filename), buffer)
+      pdfUrl = `/uploads/${filename}`
+      pdfPending = false
+    }
+
+    // 3. Atualizar no Banco de Dados
+    await prisma.proposal.update({
+      where: { id },
+      data: {
+        status: 'PROTOCOLADA',
+        protocolNumber,
+        officialEmenta,
+        sessionId: sessionId || null,
+        pdfUrl,
+        pdfPending
+      }
+    })
+
+    redirect('/admin/proposituras/cadastradas')
+  }
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <Link href="/admin/proposituras/recebidas" className="flex items-center space-x-2 text-gray-500 hover:text-gray-800 mb-6">
-        <ArrowLeft size={16} /> <span>Voltar</span>
-      </Link>
+    <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow mt-6">
+      <h1 className="text-2xl font-bold mb-4 text-gray-800">Protocolar Propositura</h1>
       
-      {searchParams.error && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl mb-6 border border-red-200 text-sm font-medium">
-          {searchParams.error}
-        </div>
-      )}
+      <div className="mb-6 p-4 bg-gray-50 rounded-md space-y-2 text-sm text-gray-700">
+        <p><strong>Autor:</strong> {proposal.parliamentarian.name}</p>
+        <p><strong>Tipo:</strong> {proposal.type}</p>
+        <p><strong>Resumo Original:</strong> {proposal.summary}</p>
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-            <h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Dados da Proposta Original</h2>
-            <div className="space-y-4 text-sm">
-              <div>
-                <span className="block text-gray-500 font-medium text-xs uppercase mb-1">Parlamentar</span>
-                <p className="font-semibold text-gray-800 text-base">{proposal.parliamentarian.fullName}</p>
-                <p className="text-gray-500">{proposal.parliamentarian.school}</p>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <span className="block text-gray-500 font-medium text-xs uppercase mb-1">Tipo</span>
-                  <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md font-semibold">{proposal.type}</span>
-                </div>
-                <div>
-                  <span className="block text-gray-500 font-medium text-xs uppercase mb-1">Enviado em</span>
-                  <p className="text-gray-800">{proposal.createdAt.toLocaleString('pt-BR')}</p>
-                </div>
-              </div>
-              <div>
-                <span className="block text-gray-500 font-medium text-xs uppercase mb-1">Assunto</span>
-                <p className="text-gray-800 bg-gray-50 p-3 rounded-lg border border-gray-100">{proposal.subject}</p>
-              </div>
-              <div>
-                <span className="block text-gray-500 font-medium text-xs uppercase mb-1">Resumo Completo</span>
-                <p className="text-gray-800 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg border border-gray-100">{proposal.summary}</p>
-              </div>
-            </div>
-          </div>
+      <form action={protocolarProposta} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Sessão Plenária</label>
+          <select name="sessionId" required className="mt-1 block w-full rounded-md border border-gray-300 p-2">
+            <option value="">Selecione uma sessão...</option>
+            {sessions.map((s) => (
+              <option key={s.id} value={s.id}>
+                Sessão #{s.number} - {s.title}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
-          <div className="bg-gray-900 p-6 rounded-xl shadow-md text-white sticky top-6">
-            <h2 className="text-lg font-bold mb-4">Cadastrar Propositura</h2>
-            <p className="text-gray-400 text-sm mb-6">Formalize esta proposta definindo a Sessão correspondente e gerando o Número Oficial.</p>
-            
-            <form action={formalize} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Sessão Plenária</label>
-                <select name="sessionId" required className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:ring-2 focus:ring-mococa-500">
-                  <option value="">Selecione...</option>
-                  {sessoes.map(s => <option key={s.id} value={s.id}>{s.number}ª {s.title} ({s.date.toLocaleDateString('pt-BR')})</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-300 mb-1">Número da Propositura</label>
-                <input type="text" name="number" required placeholder="Ex: IND-001/2026" className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-white outline-none focus:ring-2 focus:ring-mococa-500" />
-              </div>
-              <button type="submit" className="w-full bg-mococa-600 hover:bg-mococa-700 text-white font-bold py-3 rounded-lg mt-4 transition">
-                Formalizar Propositura
-              </button>
-            </form>
-          </div>
+          <label className="block text-sm font-medium text-gray-700">Ementa Oficial (Revisada pelo ADM)</label>
+          <textarea 
+            name="officialEmenta" 
+            defaultValue={proposal.summary} 
+            rows={3}
+            required 
+            className="mt-1 block w-full rounded-md border border-gray-300 p-2"
+          />
         </div>
-      </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700">Arquivo PDF da Propositura (Opcional no protocolo)</label>
+          <input 
+            type="file" 
+            name="pdfFile" 
+            accept="application/pdf"
+            className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          />
+          <p className="text-xs text-gray-500 mt-1">Se não anexar agora, a propositura ficará marcada como &quot;PDF Pendente&quot;.</p>
+        </div>
+
+        <button 
+          type="submit" 
+          className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 font-medium"
+        >
+          Protocolar Propositura
+        </button>
+      </form>
     </div>
   )
 }

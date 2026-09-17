@@ -8,58 +8,72 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  username      String   @unique
-  email         String?  @unique
-  passwordHash  String
-  role          String   @default("PARLAMENTAR") // ADMIN ou PARLAMENTAR
-  active        Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  parliamentarian Parliamentarian?
+  id               String            @id @default(uuid())
+  username         String            @unique
+  password         String
+  role             Role              @default(PARLIAMENTARIAN)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  parliamentarian  Parliamentarian?
 }
 
 model Parliamentarian {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation(fields: [userId], references: [id])
-  fullName  String
+  id        String       @id @default(uuid())
+  userId    String       @unique
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
   school    String
-  className String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
   proposals Proposal[]
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
 }
 
 model Session {
-  id          String   @id @default(cuid())
-  number      Int
+  id          String     @id @default(uuid())
+  number      Int        @unique
   title       String
-  description String?
   date        DateTime
-  status      String   @default("Aberta") // Aberta, Encerrada, Arquivada
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
+  description String?
   proposals   Proposal[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Proposal {
-  id                 String   @id @default(cuid())
-  parliamentarianId  String
-  parliamentarian    Parliamentarian @relation(fields: [parliamentarianId], references: [id])
-  type               String
-  subject            String
-  summary            String   @db.Text
-  status             String   @default("Recebida") // Recebida, Em análise, Cadastrada, Arquivada
-  createdAt          DateTime @default(now()) // Data original de envio
-  updatedAt          DateTime @updatedAt
+  id                String           @id @default(uuid())
+  title             String
+  type              ProposalType     // Ex: INDICACAO, REQUERIMENTO, PROJETO_LEI
+  summary           String           // Resumo/Ementa original enviada pelo parlamentar
+  content           String           // Texto completo
+  status            ProposalStatus   @default(PENDENTE) // PENDENTE, PROTOCOLADA, REJEITADA
+  protocolNumber    String?          @unique // Ex: IND-001/2026 gerado automaticamente
+  officialEmenta    String?          // Ementa revisada pelo ADMIN no protocolo
+  pdfUrl            String?          // URL ou caminho do PDF anexado
+  pdfPending        Boolean          @default(false) // Sinaliza se o PDF ficou pendente
+  
+  parliamentarianId String
+  parliamentarian   Parliamentarian  @relation(fields: [parliamentarianId], references: [id], onDelete: Cascade)
+  
+  sessionId         String?
+  session           Session?         @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
 
-  // Campos preenchidos na formalização (Propositura)
-  sessionId          String?
-  session            Session? @relation(fields: [sessionId], references: [id])
-  number             String?  @unique
-  formalizedAt       DateTime?
+enum Role {
+  ADMIN
+  PARLIAMENTARIAN
+}
+
+enum ProposalType {
+  INDICACAO
+  REQUERIMENTO
+  PROJETO_LEI
+}
+
+enum ProposalStatus {
+  PENDENTE
+  PROTOCOLADA
+  REJEITADA
 }
