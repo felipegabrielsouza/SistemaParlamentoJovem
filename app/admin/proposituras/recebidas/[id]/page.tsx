@@ -23,15 +23,16 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
 
   async function protocolarProposta(formData: FormData) {
     'use server'
+    if (!proposal) return
+
     const sessionId = formData.get('sessionId') as string
     const officialEmenta = formData.get('officialEmenta') as string
     const pdfFile = formData.get('pdfFile') as File
 
-    // 1. Gerar numeração automática e sequencial por tipo
     const typePrefixMap: Record<string, string> = {
       INDICACAO: 'IND',
       REQUERIMENTO: 'REQ',
-      PROJETO_LEI: 'PL'
+      MOCAO: 'MO'
     }
     const prefix = typePrefixMap[proposal.type] || 'PROP'
 
