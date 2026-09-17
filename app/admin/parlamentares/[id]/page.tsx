@@ -48,6 +48,8 @@ export default async function EditarParlamentarPage({ params }: PageProps) {
 
   async function deleteParliamentarian() {
     'use server'
+    if (!parliamentarian) return
+
     await prisma.user.delete({
       where: { id: parliamentarian.userId }
     })
