@@ -8,7 +8,7 @@ export default async function ParlamentarDashboard() {
   const pId = user?.parliamentarian?.id
 
   const propostasCount = await prisma.proposal.count({ where: { parliamentarianId: pId } })
-  const cadastradasCount = await prisma.proposal.count({ where: { status: 'Cadastrada' } })
+ const cadastradasCount = await prisma.proposal.count({ where: { status: 'PROTOCOLADA' } })
 
   return (
     <div>
