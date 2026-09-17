@@ -1,4 +1,4 @@
-import { prisma } from '../../../../lib/prisma'
+import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { writeFile } from 'fs/promises'
 import path from 'path'
