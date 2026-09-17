@@ -31,7 +31,7 @@ export default async function ParlamentaresList({ searchParams }: { searchParams
           <tbody className="divide-y divide-gray-100 text-sm">
             {list.map(p => (
               <tr key={p.id} className="hover:bg-gray-50">
-                <td className="p-4 font-medium text-gray-800">{p.fullName}</td>
+                <td className="p-4 font-medium text-gray-800">{p.name}</td>
                 <td className="p-4 text-gray-600">{p.school}</td>
                 <td className="p-4 text-gray-600">{p.user.username}</td>
                 <td className="p-4">
