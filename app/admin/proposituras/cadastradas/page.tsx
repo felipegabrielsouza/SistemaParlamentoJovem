@@ -1,52 +1,57 @@
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
+import Link from 'next/link'
 
-export const dynamic = 'force-dynamic'
-
-export default async function PropositurasCadastradas({ searchParams }: { searchParams: { success?: string } }) {
+export default async function PropositurasCadastradas() {
   const proposituras = await prisma.proposal.findMany({
-    where: { status: 'Cadastrada' },
+    where: { status: 'PROTOCOLADA' },
     include: { parliamentarian: true, session: true },
-    orderBy: { formalizedAt: 'desc' }
+    orderBy: { createdAt: 'desc' }
   })
 
   return (
-    <div>
-      <h1 className="text-2xl font-bold text-gray-800 mb-2">Proposituras Cadastradas</h1>
-      <p className="text-gray-500 mb-6">Propostas que já foram analisadas, numeradas e vinculadas a uma sessão.</p>
+    <div className="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow mt-6">
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Proposituras Protocoladas (Cadastradas)</h1>
 
-      {searchParams.success && <div className="bg-green-50 text-green-700 p-4 rounded-lg mb-6 border border-green-200">Propositura cadastrada com sucesso!</div>}
+      {proposituras.length === 0 ? (
+        <p className="text-gray-500">Nenhuma propositura protocolada até o momento.</p>
+      ) : (
+        <div className="space-y-4">
+          {proposituras.map((p) => (
+            <div key={p.id} className="border border-gray-200 p-4 rounded-md shadow-sm">
+              <div className="flex justify-between items-start mb-2">
+                <div>
+                  <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded mr-2">
+                    {p.protocolNumber}
+                  </span>
+                  <span className="text-xs font-medium text-gray-500">{p.type}</span>
+                </div>
+                {p.session && (
+                  <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded">
+                    Sessão #{p.session.number} - {p.session.title}
+                  </span>
+                )}
+              </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200 text-gray-600 text-sm">
-              <th className="p-4 font-medium">Nº</th>
-              <th className="p-4 font-medium">Sessão</th>
-              <th className="p-4 font-medium">Tipo</th>
-              <th className="p-4 font-medium">Assunto</th>
-              <th className="p-4 font-medium">Autor</th>
-              <th className="p-4 font-medium">Data Cadastro</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100 text-sm">
-            {proposituras.map(p => (
-              <tr key={p.id} className="hover:bg-gray-50">
-                <td className="p-4 font-bold text-gray-900">{p.number}</td>
-                <td className="p-4 text-gray-600">{p.session?.number}ª Sessão</td>
-                <td className="p-4">
-                  <span className="bg-indigo-100 text-indigo-700 px-2 py-1 rounded-md text-xs font-semibold">{p.type}</span>
-                </td>
-                <td className="p-4 text-gray-800 max-w-xs truncate" title={p.subject}>{p.subject}</td>
-                <td className="p-4 text-gray-600">{p.parliamentarian.fullName}</td>
-                <td className="p-4 text-gray-600 whitespace-nowrap">{p.formalizedAt?.toLocaleDateString('pt-BR')}</td>
-              </tr>
-            ))}
-            {proposituras.length === 0 && (
-              <tr><td colSpan={6} className="p-8 text-center text-gray-500">Nenhuma propositura cadastrada.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+              <h3 className="font-bold text-gray-800 text-lg mb-1">{p.officialEmenta || p.summary}</h3>
+              <p className="text-sm text-gray-600 mb-3">Autor: {p.parliamentarian.name}</p>
+
+              <div className="flex justify-between items-center pt-3 border-t border-gray-100 text-xs text-gray-500">
+                <span>Criada em: {new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
+                {p.pdfUrl && (
+                  <a 
+                    href={p.pdfUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="bg-indigo-600 text-white px-3 py-1.5 rounded font-medium hover:bg-indigo-700"
+                  >
+                    Baixar PDF Oficial
+                  </a>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
