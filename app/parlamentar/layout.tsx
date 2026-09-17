@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation'
 
 export default async function ParlamentarLayout({ children }: { children: React.ReactNode }) {
   const user = await getSession()
-  if (!user || user.role !== 'PARLAMENTARIAN') redirect('/login')
+  if (!user || (user.role as string) !== 'PARLIAMENTARIAN') redirect('/login')
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-gray-50">
