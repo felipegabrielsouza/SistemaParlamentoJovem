@@ -29,26 +29,27 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
     const sessionId = formData.get('sessionId') as string
     const officialEmenta = formData.get('officialEmenta') as string
     const pdfFile = formData.get('pdfFile') as File
+    const currentYear = new Date().getFullYear()
 
-    const typePrefixMap: Record<string, string> = {
-      INDICACAO: 'IND',
-      REQUERIMENTO: 'REQ',
-      MOCAO: 'MO'
-    }
-    const prefix = typePrefixMap[proposal.type] || 'PROP'
+    // 1. GERAÇÃO AUTOMÁTICA DO NÚMERO DE PROTOCOLO (Contínuo geral)
+    // Conta quantas propostas já foram protocoladas no total para definir o próximo número de protocolo
+    const totalProtocoladas = await prisma.proposal.count({
+      where: { status: 'PROTOCOLADA' }
+    })
+    const protocolNumber = String(totalProtocoladas + 1) // Ex: "58"
 
-    // Conta quantas propostas já foram protocoladas desse mesmo tipo para gerar o sequencial único
-    const count = await prisma.proposal.count({
+    // 2. GERAÇÃO AUTOMÁTICA DO NÚMERO DA PROPOSITURA (Sequencial por tipo no ano)
+    // Conta quantas propostas do MESMO TIPO já foram protocoladas
+    const countMesmoTipo = await prisma.proposal.count({
       where: { 
         type: proposal.type,
         status: 'PROTOCOLADA'
       }
     })
-    const currentYear = new Date().getFullYear()
-    const sequenceNumber = String(count + 1).padStart(3, '0')
-    const protocolNumber = `${prefix}-${sequenceNumber}/${currentYear}`
+    const sequencialTipo = countMesmoTipo + 1
+    const proposalNumber = `${sequencialTipo}/${currentYear}` // Ex: "14/2026"
 
-    // 2. Lidar com o Upload do PDF (Compatível com ambiente Serverless / Vercel)
+    // 3. Lidar com o Upload do PDF
     let pdfUrl: string | null = null
     let pdfPending = true
 
@@ -56,26 +57,29 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
       try {
         const bytes = await pdfFile.arrayBuffer()
         const buffer = Buffer.from(bytes)
-        const filename = `${protocolNumber.replace(/[/]/g, '-')}-${Date.now()}.pdf`
+        const filename = `prot-${protocolNumber}-${Date.now()}.pdf`
         const uploadDir = path.join(process.cwd(), 'public/uploads')
         
-        // Tenta salvar no disco (funciona localmente)
         await writeFile(path.join(uploadDir, filename), buffer)
         pdfUrl = `/uploads/${filename}`
         pdfPending = false
       } catch (err) {
-        console.warn("Aviso: Sistema de arquivos local restrito (Vercel). PDF marcado como pendente ou salvo em base64 se necessário.")
+        console.warn("Aviso: Sistema de arquivos local restrito (Vercel).")
         pdfPending = true
       }
     }
 
-    // 3. Atualizar no Banco de Dados
+    // 4. Atualizar no Banco de Dados
+    // Salvando o protocolo no campo protocolNumber e o número da propositura se houver coluna correspondente, 
+    // ou formatando ambos de acordo com a estrutura do seu schema.
     await prisma.proposal.update({
       where: { id },
       data: {
         status: 'PROTOCOLADA',
-        protocolNumber,
-        officialEmenta,
+        protocolNumber: protocolNumber, // Número do Protocolo (ex: "58")
+        // Se a sua coluna principal guarda o formato final, você pode concatenar ou salvar separado:
+        // Exemplo: se protocolNumber guarda o protocolo e o officialEmenta ou outro campo guarda a numeração:
+        officialEmenta: `[Propositura nº ${proposalNumber}] - ${officialEmenta}`,
         sessionId: sessionId || null,
         pdfUrl,
         pdfPending
@@ -98,7 +102,7 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
       <form action={protocolarProposta} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Sessão Plenária</label>
-          <select name="sessionId" required className="mt-1 block w-full rounded-md border border-gray-300 p-2">
+          <select name="sessionId" required className="mt-1 block w-full rounded-md border border-gray-300 p-2 bg-white">
             <option value="">Selecione uma sessão...</option>
             {sessions.map((s) => (
               <option key={s.id} value={s.id}>
@@ -120,21 +124,24 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Arquivo PDF da Propositura (Opcional no protocolo)</label>
+          <label className="block text-sm font-medium text-gray-700">Arquivo PDF da Propositura (Opcional)</label>
           <input 
             type="file" 
             name="pdfFile" 
             accept="application/pdf"
             className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
-          <p className="text-xs text-gray-500 mt-1">Se não anexar agora, a propositura ficará marcada como &quot;PDF Pendente&quot;.</p>
+        </div>
+
+        <div className="p-4 bg-blue-50 text-blue-800 rounded-md text-sm">
+          ℹ️ O sistema gerará automaticamente o <strong>Número de Protocolo contínuo</strong> e o <strong>Número Sequencial da Propositura</strong> para este tipo no ano atual.
         </div>
 
         <button 
           type="submit" 
           className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 font-medium"
         >
-          Protocolar Propositura
+          Gerar Protocolo e Oficializar Propositura
         </button>
       </form>
     </div>
