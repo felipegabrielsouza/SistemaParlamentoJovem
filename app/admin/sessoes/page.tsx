@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 
 export default async function SessoesAdminPage() {
   const sessions = await prisma.session.findMany({
@@ -56,7 +57,7 @@ export default async function SessoesAdminPage() {
                   <button 
                     type="submit" 
                     className="bg-red-50 text-red-600 px-3 py-1.5 rounded text-xs font-medium hover:bg-red-100"
-                    onClick={(e) => { if(!confirm('Tem certeza que deseja excluir esta sessão?')) e.preventDefault(); }}
+                   
                   >
                     Excluir
                   </button>
