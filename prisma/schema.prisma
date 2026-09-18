@@ -41,7 +41,6 @@ model Session {
 
 model Proposal {
   id                String           @id @default(uuid())
-  title             String
   type              ProposalType     // Ex: INDICACAO, REQUERIMENTO, PROJETO_LEI
   summary           String           // Resumo/Ementa original enviada pelo parlamentar
   content           String           // Texto completo
