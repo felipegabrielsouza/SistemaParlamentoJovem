@@ -63,6 +63,7 @@ export async function createParliamentarianAction(formData: FormData) {
         role: 'PARLIAMENTARIAN',
         parliamentarian: {
           create: {
+            fullName: name, // Garante que o fullName preenche obrigatoriamente
             name: name,
             school: school,
           } as any
