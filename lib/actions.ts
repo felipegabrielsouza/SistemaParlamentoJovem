@@ -106,13 +106,19 @@ export async function createProposalAction(parliamentarianId: string, formData: 
     redirect('/parlamentar/nova-proposta?error=Preencha os campos obrigatorios.')
   }
 
-  // Normaliza o tipo caso venha com acentos/espaços para corresponder ao Enum do banco
-  if (type.toLowerCase().includes('moção') || type.toLowerCase().includes('mocao')) {
-    type = 'MOCAO' // ou o nome exato do Enum no seu banco
-  } else if (type.toLowerCase().includes('indicação') || type.toLowerCase().includes('indicacao')) {
+  // Normalização universal para os tipos de ProposalType aceitos pelo banco
+  const typeLower = type.toLowerCase()
+  if (typeLower.includes('moç') || typeLower.includes('moc')) {
+    type = 'MOCAO'
+  } else if (typeLower.includes('indica') || typeLower.includes('indic')) {
     type = 'INDICACAO'
-  } else if (type.toLowerCase().includes('projeto')) {
+  } else if (typeLower.includes('requer')) {
+    type = 'REQUERIMENTO'
+  } else if (typeLower.includes('projeto') || typeLower.includes('lei')) {
     type = 'PROJETO_DE_LEI'
+  } else {
+    // Fallback: se vier em maiúsculo ou outro formato, limpa acentos e espaços
+    type = type.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_')
   }
 
   try {
