@@ -115,9 +115,10 @@ export async function createProposalAction(parliamentarianId: string, formData: 
         status: 'PENDENTE'
       } as any
     })
-  } catch (error) {
-    console.error('Erro ao criar proposta:', error)
-    redirect('/parlamentar/nova-proposta?error=Erro ao salvar a proposta no banco de dados.')
+  } catch (error: any) {
+    const mensagemReal = encodeURIComponent(error.message || 'Erro desconhecido')
+    console.error('Erro detalhado ao criar proposta:', error)
+    redirect(`/parlamentar/nova-proposta?error=${mensagemReal}`)
   }
   
   redirect('/parlamentar/minhas-propostas?success=true')
