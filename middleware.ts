@@ -28,7 +28,7 @@ export async function middleware(request: NextRequest) {
   // Se já estiver logado e acessar login ou home, redirecionar para dashboard correto
   if (payload && (isAuthPage || pathname === '/')) {
     if (payload.role === 'ADMIN') return NextResponse.redirect(new URL('/admin', request.url));
-    if (payload.role === 'PARLAMENTAR') return NextResponse.redirect(new URL('/parlamentar', request.url));
+    if (payload.role === 'PARLIAMENTARIAN') return NextResponse.redirect(new URL('/parlamentar', request.url));
   }
 
   // Controle de permissão de rotas
@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/parlamentar', request.url));
   }
 
-  if (isParlamentarPage && payload?.role !== 'PARLAMENTAR') {
+  if (isParlamentarPage && payload?.role !== 'PARLIAMENTARIAN') {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
 
