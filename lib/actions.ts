@@ -98,12 +98,21 @@ export async function createSessionAction(formData: FormData) {
 
 export async function createProposalAction(parliamentarianId: string, formData: FormData) {
   const title = formData.get('title') as string
-  const type = formData.get('type') as string
+  let type = formData.get('type') as string
   const summary = formData.get('summary') as string
   const content = formData.get('content') as string || summary
 
   if (!title || !type || !summary) {
-    redirect('/parlamentar/nova-proposta?error=Preencha os campos obrigatorios (Titulo, Tipo e Resumo).')
+    redirect('/parlamentar/nova-proposta?error=Preencha os campos obrigatorios.')
+  }
+
+  // Normaliza o tipo caso venha com acentos/espaços para corresponder ao Enum do banco
+  if (type.toLowerCase().includes('moção') || type.toLowerCase().includes('mocao')) {
+    type = 'MOCAO' // ou o nome exato do Enum no seu banco
+  } else if (type.toLowerCase().includes('indicação') || type.toLowerCase().includes('indicacao')) {
+    type = 'INDICACAO'
+  } else if (type.toLowerCase().includes('projeto')) {
+    type = 'PROJETO_DE_LEI'
   }
 
   try {
