@@ -52,9 +52,9 @@ export async function createParliamentarianAction(formData: FormData) {
     redirect('/admin/parlamentares/novo?error=Preencha todos os campos obrigatorios.')
   }
 
-  const hashedPassword = await bcrypt.hash(password, 10)
-
   try {
+    const hashedPassword = await bcrypt.hash(password, 10)
+
     await prisma.user.create({
       data: {
         username,
@@ -70,8 +70,10 @@ export async function createParliamentarianAction(formData: FormData) {
       }
     } as any)
   } catch (error: any) {
-    console.error("Erro detalhado:", error)
-    redirect('/admin/parlamentares/novo?error=Erro ao cadastrar. O nome de usuario ja pode estar em uso.')
+    // ISSO VAI MOSTRAR O ERRO REAL NA TELA PARA A GENTE SABER O QUE É
+    const mensagemReal = encodeURIComponent(error.message || 'Erro desconhecido')
+    console.error("ERRO COMPLETO DO PRISMA:", error)
+    redirect(`/admin/parlamentares/novo?error=${mensagemReal}`)
   }
 
   redirect('/admin/parlamentares?success=true')
