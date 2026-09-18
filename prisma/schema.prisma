@@ -41,9 +41,15 @@ model Session {
 
 model Proposal {
   id                String           @id @default(uuid())
-  type              ProposalType     // Ex: INDICACAO, REQUERIMENTO, PROJETO_LEI
-  summary           String           // Resumo/Ementa enviada pelo parlamentar
+  title             String
+  type              ProposalType     // Ex: INDICACAO, REQUERIMENTO, MOCAO
+  summary           String           // Resumo/Ementa original enviada pelo parlamentar
+  content           String           // Texto completo
   status            ProposalStatus   @default(PENDENTE) // PENDENTE, PROTOCOLADA, REJEITADA
+  protocolNumber    String?          @unique // Ex: IND-001/2026 gerado automaticamente
+  officialEmenta    String?          // Ementa revisada pelo ADMIN no protocolo
+  pdfUrl            String?          // URL ou caminho do PDF anexado
+  pdfPending        Boolean          @default(false) // Sinaliza se o PDF ficou pendente
   
   parliamentarianId String
   parliamentarian   Parliamentarian  @relation(fields: [parliamentarianId], references: [id], onDelete: Cascade)
@@ -63,7 +69,7 @@ enum Role {
 enum ProposalType {
   INDICACAO
   REQUERIMENTO
-  PROJETO_LEI
+  MOCAO
 }
 
 enum ProposalStatus {
