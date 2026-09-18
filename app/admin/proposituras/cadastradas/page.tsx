@@ -33,7 +33,7 @@ export default async function PropositurasCadastradas() {
                 )}
               </div>
 
-              <h3 className="font-bold text-gray-800 text-lg mb-1">{p.officialEmenta || p.summary}</h3>
+             <h3 className="font-bold text-gray-800 text-lg mb-1">{p.summary}</h3>
               <p className="text-sm text-gray-600 mb-3">Autor: {p.parliamentarian.name}</p>
 
               <div className="flex justify-between items-center pt-3 border-t border-gray-100 text-xs text-gray-500">
