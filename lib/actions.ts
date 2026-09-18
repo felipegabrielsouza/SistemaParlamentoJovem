@@ -63,13 +63,12 @@ export async function createParliamentarianAction(formData: FormData) {
         active: true,
         parliamentarian: {
           create: {
-            fullName: name, // Preenche o fullName que o banco exibe no print
-            name: name,     // Preenche o name também por garantia
-            school
-          }
+            name: name,
+            school: school,
+          } as any
         }
       }
-    })
+    } as any)
   } catch (error: any) {
     console.error("Erro detalhado:", error)
     redirect('/admin/parlamentares/novo?error=Erro ao cadastrar. O nome de usuario ja pode estar em uso.')
