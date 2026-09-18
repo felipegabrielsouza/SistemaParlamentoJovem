@@ -100,6 +100,7 @@ export async function createProposalAction(parliamentarianId: string, formData: 
   const title = formData.get('title') as string
   let type = formData.get('type') as string
   const summary = formData.get('summary') as string
+  const subject = formData.get('subject') as string || title // Usa o title como subject se não vier no form
   const content = formData.get('content') as string || summary
 
   if (!title || !type || !summary) {
@@ -117,7 +118,6 @@ export async function createProposalAction(parliamentarianId: string, formData: 
   } else if (typeLower.includes('projeto') || typeLower.includes('lei')) {
     type = 'PROJETO_DE_LEI'
   } else {
-    // Fallback: se vier em maiúsculo ou outro formato, limpa acentos e espaços
     type = type.toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_')
   }
 
@@ -126,6 +126,7 @@ export async function createProposalAction(parliamentarianId: string, formData: 
       data: {
         parliamentarianId,
         title,
+        subject, // Adicionado para satisfazer a restrição do banco
         type: type as any,
         summary,
         content,
