@@ -97,18 +97,20 @@ export async function createSessionAction(formData: FormData) {
 }
 
 export async function createProposalAction(parliamentarianId: string, formData: FormData) {
+  const title = formData.get('title') as string
   const type = formData.get('type') as string
   const summary = formData.get('summary') as string
   const content = formData.get('content') as string || summary
 
-  if (!type || !summary) {
-    redirect('/parlamentar/nova-proposta?error=Preencha os campos obrigatorios.')
+  if (!title || !type || !summary) {
+    redirect('/parlamentar/nova-proposta?error=Preencha os campos obrigatorios (Titulo, Tipo e Resumo).')
   }
 
   try {
     await prisma.proposal.create({
       data: {
         parliamentarianId,
+        title,
         type: type as any,
         summary,
         content,

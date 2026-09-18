@@ -30,7 +30,7 @@ export default async function NovaProposta() {
 
         <div>
           <label className="block text-sm font-bold text-gray-700 mb-2">2. Assunto (Título curto)</label>
-          <input type="text" name="subject" required placeholder="Ex: Melhorias na iluminação pública da rua X" className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-parlamento-500 focus:bg-white transition text-gray-800" />
+          <input type="text" name="title" required placeholder="Ex: Melhorias na iluminação pública da rua X" className="w-full bg-gray-50 border border-gray-300 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-parlamento-500 focus:bg-white transition text-gray-800" />
         </div>
 
         <div>
