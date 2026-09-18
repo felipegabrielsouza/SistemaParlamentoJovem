@@ -42,6 +42,7 @@ export async function logoutAction() {
   cookieStore.delete('token')
   redirect('/login')
 }
+
 export async function createParliamentarianAction(formData: FormData) {
   const name = (formData.get('fullName') || formData.get('name')) as string
   const school = formData.get('school') as string
@@ -60,7 +61,6 @@ export async function createParliamentarianAction(formData: FormData) {
         username,
         password: hashedPassword,
         role: 'PARLIAMENTARIAN',
-        active: true,
         parliamentarian: {
           create: {
             name: name,
@@ -70,7 +70,6 @@ export async function createParliamentarianAction(formData: FormData) {
       }
     } as any)
   } catch (error: any) {
-    // ISSO VAI MOSTRAR O ERRO REAL NA TELA PARA A GENTE SABER O QUE É
     const mensagemReal = encodeURIComponent(error.message || 'Erro desconhecido')
     console.error("ERRO COMPLETO DO PRISMA:", error)
     redirect(`/admin/parlamentares/novo?error=${mensagemReal}`)
@@ -113,7 +112,7 @@ export async function createProposalAction(parliamentarianId: string, formData: 
         summary,
         content,
         status: 'PENDENTE'
-      } as any // <-- Isso força o Prisma a aceitar os dados sem travar no build por divergência de schema
+      } as any
     })
   } catch (error) {
     console.error('Erro ao criar proposta:', error)
