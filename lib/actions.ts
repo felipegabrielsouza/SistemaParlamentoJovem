@@ -65,6 +65,7 @@ export async function createParliamentarianAction(formData: FormData) {
           create: {
             name: name,
             school: school,
+            className: "Turma Única",
           } as any
         }
       }
