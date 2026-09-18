@@ -22,7 +22,7 @@ export default async function PropositurasCadastradas() {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded mr-2">
-                    {p.protocolNumber}
+                    {p.id.slice(0, 8)}
                   </span>
                   <span className="text-xs font-medium text-gray-500">{p.type}</span>
                 </div>
