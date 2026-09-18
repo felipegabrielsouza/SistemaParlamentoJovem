@@ -25,6 +25,8 @@ export default async function MeuPerfilPage() {
 
   async function updateProfile(formData: FormData) {
     'use server'
+    if (!user) return
+
     const username = formData.get('username') as string
     const password = formData.get('password') as string
 
