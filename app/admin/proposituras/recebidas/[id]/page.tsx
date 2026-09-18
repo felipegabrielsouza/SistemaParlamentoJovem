@@ -31,15 +31,21 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
     const pdfFile = formData.get('pdfFile') as File
     const currentYear = new Date().getFullYear()
 
-    // 1. GERAÇÃO AUTOMÁTICA DO NÚMERO DE PROTOCOLO (Contínuo geral)
-    // Conta quantas propostas já foram protocoladas no total para definir o próximo número de protocolo
+    // 1. Número de Protocolo Contínuo
     const totalProtocoladas = await prisma.proposal.count({
       where: { status: 'PROTOCOLADA' }
     })
-    const protocolNumber = String(totalProtocoladas + 1) // Ex: "58"
+    const numeroProtocolo = totalProtocoladas + 1
 
-    // 2. GERAÇÃO AUTOMÁTICA DO NÚMERO DA PROPOSITURA (Sequencial por tipo no ano)
-    // Conta quantas propostas do MESMO TIPO já foram protocoladas
+    // 2. Número da Propositura por Tipo (ex: IND-1/2026, REQ-2/2026, MO-3/2026)
+    const typePrefixMap: Record<string, string> = {
+      INDICACAO: 'IND',
+      REQUERIMENTO: 'REQ',
+      MOCAO: 'MO',
+      PROJETO_DE_LEI: 'PL'
+    }
+    const prefix = typePrefixMap[proposal.type] || 'PROP'
+
     const countMesmoTipo = await prisma.proposal.count({
       where: { 
         type: proposal.type,
@@ -47,9 +53,12 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
       }
     })
     const sequencialTipo = countMesmoTipo + 1
-    const proposalNumber = `${sequencialTipo}/${currentYear}` // Ex: "14/2026"
+    const codigoPropositura = `${prefix}-${sequencialTipo}/${currentYear}`
 
-    // 3. Lidar com o Upload do PDF
+    // Formatamos o protocolNumber guardando ambos de forma limpa para exibição garantida
+    // Exemplo armazenado: "PROT: 69 | COD: MO-4/2026"
+    const protocolNumberString = `PROT: ${numeroProtocolo} | ${codigoPropositura}`
+
     let pdfUrl: string | null = null
     let pdfPending = true
 
@@ -57,7 +66,7 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
       try {
         const bytes = await pdfFile.arrayBuffer()
         const buffer = Buffer.from(bytes)
-        const filename = `prot-${protocolNumber}-${Date.now()}.pdf`
+        const filename = `prot-${numeroProtocolo}-${Date.now()}.pdf`
         const uploadDir = path.join(process.cwd(), 'public/uploads')
         
         await writeFile(path.join(uploadDir, filename), buffer)
@@ -69,17 +78,12 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
       }
     }
 
-    // 4. Atualizar no Banco de Dados
-    // Salvando o protocolo no campo protocolNumber e o número da propositura se houver coluna correspondente, 
-    // ou formatando ambos de acordo com a estrutura do seu schema.
     await prisma.proposal.update({
       where: { id },
       data: {
         status: 'PROTOCOLADA',
-        protocolNumber: protocolNumber, // Número do Protocolo (ex: "58")
-        // Se a sua coluna principal guarda o formato final, você pode concatenar ou salvar separado:
-        // Exemplo: se protocolNumber guarda o protocolo e o officialEmenta ou outro campo guarda a numeração:
-        officialEmenta: `[Propositura nº ${proposalNumber}] - ${officialEmenta}`,
+        protocolNumber: protocolNumberString,
+        officialEmenta,
         sessionId: sessionId || null,
         pdfUrl,
         pdfPending
@@ -134,14 +138,14 @@ export default async function AnalisarPropostaPage({ params }: PageProps) {
         </div>
 
         <div className="p-4 bg-blue-50 text-blue-800 rounded-md text-sm">
-          ℹ️ O sistema gerará automaticamente o <strong>Número de Protocolo contínuo</strong> e o <strong>Número Sequencial da Propositura</strong> para este tipo no ano atual.
+          ℹ️ O sistema gerará automaticamente o número da propositura (ex: <strong>MO-4/2026</strong>) e o número de protocolo contínuo (ex: <strong>Protocolo nº 69</strong>).
         </div>
 
         <button 
           type="submit" 
           className="w-full bg-green-600 text-white py-2 rounded-md hover:bg-green-700 font-medium"
         >
-          Gerar Protocolo e Oficializar Propositura
+          Gerar Números e Protocolar
         </button>
       </form>
     </div>

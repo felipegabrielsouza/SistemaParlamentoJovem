@@ -18,14 +18,20 @@ export default async function PropositurasCadastradas() {
       ) : (
         <div className="space-y-4">
           {proposituras.map((p) => (
-            <div key={p.id} className="border border-gray-200 p-4 rounded-md shadow-sm">
-              <div className="flex justify-between items-start mb-2">
-                <div>
-                  <span className="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-semibold rounded mr-2">
-                    {p.id.slice(0, 8)}
+            <div key={p.id} className="border border-gray-200 p-4 rounded-md shadow-sm space-y-2">
+              <div className="flex flex-wrap justify-between items-start gap-2 mb-1">
+                <div className="flex items-center gap-2">
+                  {/* Tipo da Propositura */}
+                  <span className="px-2.5 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded uppercase">
+                    {p.type}
                   </span>
-                  <span className="text-xs font-medium text-gray-500">{p.type}</span>
+                  
+                  {/* Ambos os números (Propositura e Protocolo) */}
+                  <span className="px-2.5 py-0.5 bg-gray-100 text-gray-700 text-xs font-semibold rounded">
+                    {p.protocolNumber || 'Protocolo pendente'}
+                  </span>
                 </div>
+
                 {p.session && (
                   <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2 py-1 rounded">
                     Sessão #{p.session.number} - {p.session.title}
@@ -33,11 +39,18 @@ export default async function PropositurasCadastradas() {
                 )}
               </div>
 
-             <h3 className="font-bold text-gray-800 text-lg mb-1">{p.summary}</h3>
-              <p className="text-sm text-gray-600 mb-3">Autor: {p.parliamentarian.name}</p>
+              {/* Ementa Oficial / Resumo */}
+              <h3 className="font-bold text-gray-800 text-base">
+                {p.officialEmenta || p.summary}
+              </h3>
+
+              {/* Autor */}
+              <p className="text-sm text-gray-600">
+                Autor(a): <span className="font-semibold text-gray-700">{p.parliamentarian.name}</span>
+              </p>
 
               <div className="flex justify-between items-center pt-3 border-t border-gray-100 text-xs text-gray-500">
-                <span>Criada em: {new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
+                <span>Protocolado em: {new Date(p.createdAt).toLocaleDateString('pt-BR')}</span>
                 {p.pdfUrl && (
                   <a 
                     href={p.pdfUrl} 
