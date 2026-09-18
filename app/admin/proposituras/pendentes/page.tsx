@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { writeFile } from 'fs/promises'
 import path from 'path'
 import { redirect } from 'next/navigation'
+export const dynamic = 'force-dynamic'
 
 export default async function PropostasPendentesPage() {
   const proposals = await prisma.proposal.findMany({

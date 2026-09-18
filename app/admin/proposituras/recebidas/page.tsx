@@ -47,7 +47,6 @@ export default async function PropostasRecebidasPage() {
                   <button 
                     type="submit" 
                     className="bg-red-50 text-red-600 px-3 py-1.5 rounded text-xs font-medium hover:bg-red-100"
-                    onClick={(e) => { if(!confirm('Deseja realmente excluir esta proposta recebida?')) e.preventDefault(); }}
                   >
                     Excluir
                   </button>
