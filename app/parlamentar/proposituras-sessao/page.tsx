@@ -1,12 +1,12 @@
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 
 export const dynamic = 'force-dynamic'
 
 export default async function PropositurasSessao() {
   const proposituras = await prisma.proposal.findMany({
-    where: { status: 'Cadastrada' },
+    where: { status: 'PROTOCOLADA' },
     include: { parliamentarian: true, session: true },
-    orderBy: { formalizedAt: 'desc' }
+    orderBy: { createdAt: 'desc' }
   })
 
   return (
@@ -18,16 +18,16 @@ export default async function PropositurasSessao() {
         {proposituras.map(p => (
           <div key={p.id} className="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 flex flex-col">
             <div className="flex justify-between items-start mb-3 border-b border-gray-100 pb-3">
-              <span className="bg-gray-800 text-white px-3 py-1 rounded-lg font-bold text-sm">{p.number}</span>
+              <span className="bg-gray-800 text-white px-3 py-1 rounded-lg font-bold text-sm">{p.protocolNumber || 'N/D'}</span>
               <span className="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-1 rounded">{p.type}</span>
             </div>
             
-            <h3 className="text-lg font-bold text-gray-800 mb-2">{p.subject}</h3>
+            <h3 className="text-lg font-bold text-gray-800 mb-2">{p.officialEmenta || p.summary}</h3>
             <p className="text-gray-600 text-sm flex-1 mb-4">{p.summary}</p>
             
-            <div className="mt-auto pt-4 border-t border-gray-100 text-sm">
-              <p><span className="text-gray-500">Autor:</span> <strong className="text-gray-800">{p.parliamentarian.fullName}</strong></p>
-              <p><span className="text-gray-500">Sessão:</span> <strong className="text-gray-800">{p.session?.number}ª Sessão Plenária</strong></p>
+            <div className="mt-auto pt-4 border-t border-gray-100 text-sm space-y-1">
+              <p><span className="text-gray-500">Autor:</span> <strong className="text-gray-800">{p.parliamentarian.name}</strong></p>
+              <p><span className="text-gray-500">Sessão:</span> <strong className="text-gray-800">{p.session ? `${p.session.number}ª Sessão Plenária` : 'Não vinculada'}</strong></p>
             </div>
           </div>
         ))}
