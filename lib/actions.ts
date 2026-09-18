@@ -1,6 +1,6 @@
 'use server'
 
-import { prisma } from '@/lib/db'
+import { prisma } from '@/lib/prisma'
 import { createToken } from '@/lib/auth'
 import { cookies } from 'next/headers'
 import bcrypt from 'bcryptjs'
@@ -15,56 +15,62 @@ export async function loginAction(formData: FormData) {
   }
 
   const user = await prisma.user.findUnique({ where: { username } })
-  if (!user || !user.active) {
-    redirect('/login?error=Usuario invalido ou inativo.')
+  if (!user) {
+    redirect('/login?error=Usuario invalido.')
   }
 
-  const isValid = await bcrypt.compare(password, user.passwordHash)
+  const isValid = await bcrypt.compare(password, user.password)
   if (!isValid) {
     redirect('/login?error=Senha incorreta.')
   }
 
   const token = await createToken({ userId: user.id, role: user.role })
-  cookies().set('token', token, { httpOnly: true, secure: process.env.NODE_ENV === 'production', maxAge: 86400, path: '/' })
+  const cookieStore = await cookies()
+  cookieStore.set('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 86400,
+    path: '/'
+  })
 
   if (user.role === 'ADMIN') redirect('/admin')
   redirect('/parlamentar')
 }
 
 export async function logoutAction() {
-  cookies().delete('token')
+  const cookieStore = await cookies()
+  cookieStore.delete('token')
   redirect('/login')
 }
 
 export async function createParliamentarianAction(formData: FormData) {
-  const fullName = formData.get('fullName') as string
+  const name = (formData.get('fullName') || formData.get('name')) as string
   const school = formData.get('school') as string
-  const className = formData.get('className') as string
-  const email = formData.get('email') as string
   const username = formData.get('username') as string
   const password = formData.get('password') as string
 
-  const passwordHash = await bcrypt.hash(password, 10)
+  if (!name || !school || !username || !password) {
+    redirect('/admin/parlamentares/novo?error=Preencha todos os campos obrigatorios.')
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10)
 
   try {
     await prisma.user.create({
       data: {
         username,
-        email: email || null,
-        passwordHash,
-        role: 'PARLAMENTAR',
+        password: hashedPassword,
+        role: 'PARLIAMENTARIAN',
         parliamentarian: {
           create: {
-            fullName,
-            school,
-            className
+            name,
+            school
           }
         }
       }
     })
   } catch (error) {
-    // Redireciona de volta para a tela de cadastro passando o erro via URL
-    redirect('/admin/parlamentares/novo?error=Erro ao cadastrar. O nome de usuario ou e-mail ja pode estar em uso.')
+    redirect('/admin/parlamentares/novo?error=Erro ao cadastrar. O nome de usuario ja pode estar em uso.')
   }
 
   redirect('/admin/parlamentares?success=true')
@@ -89,10 +95,11 @@ export async function createSessionAction(formData: FormData) {
 
 export async function createProposalAction(parliamentarianId: string, formData: FormData) {
   const type = formData.get('type') as string
-  const subject = formData.get('subject') as string
+  const title = formData.get('title') as string
   const summary = formData.get('summary') as string
+  const content = formData.get('content') as string
 
-  if (!type || !subject || !summary) {
+  if (!type || !title || !summary || !content) {
     redirect('/parlamentar/nova-proposta?error=Todos os campos sao obrigatorios.')
   }
 
@@ -100,23 +107,26 @@ export async function createProposalAction(parliamentarianId: string, formData: 
     await prisma.proposal.create({
       data: {
         parliamentarianId,
-        type,
-        subject,
+        type: type as any,
+        title,
         summary,
-        status: 'Recebida'
+        content,
+        status: 'PENDENTE'
       }
     })
   } catch (error) {
+    console.error('Erro ao criar proposta:', error)
     redirect('/parlamentar/nova-proposta?error=Erro ao salvar a proposta no banco de dados.')
   }
   
   redirect('/parlamentar/minhas-propostas?success=true')
 }
+
 export async function formalizeProposalAction(proposalId: string, formData: FormData) {
   const sessionId = formData.get('sessionId') as string
-  const number = formData.get('number') as string
+  const protocolNumber = formData.get('number') as string
 
-  if (!sessionId || !number) {
+  if (!sessionId || !protocolNumber) {
     redirect(`/admin/proposituras/recebidas/${proposalId}?error=Sessao e Numero sao obrigatorios.`)
   }
 
@@ -125,16 +135,13 @@ export async function formalizeProposalAction(proposalId: string, formData: Form
       where: { id: proposalId },
       data: {
         sessionId,
-        number,
-        status: 'Cadastrada',
-        formalizedAt: new Date()
+        protocolNumber,
+        status: 'PROTOCOLADA'
       }
     })
   } catch (error) {
-    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Erro ao formalizar. O numero da propositura pode ja estar em uso.`)
+    redirect(`/admin/proposituras/recebidas/${proposalId}?error=Erro ao formalizar a propositura.`)
   }
 
   redirect('/admin/proposituras/cadastradas?success=true')
 }
-
-//felipe é legal dms so
