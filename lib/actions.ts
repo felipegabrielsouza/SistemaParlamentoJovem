@@ -100,7 +100,6 @@ export async function createProposalAction(parliamentarianId: string, formData: 
   const title = formData.get('title') as string
   let type = formData.get('type') as string
   const summary = formData.get('summary') as string
-  const subject = formData.get('subject') as string || title // Usa o title como subject se não vier no form
   const content = formData.get('content') as string || summary
 
   if (!title || !type || !summary) {
@@ -126,7 +125,6 @@ export async function createProposalAction(parliamentarianId: string, formData: 
       data: {
         parliamentarianId,
         title,
-        subject, // Adicionado para satisfazer a restrição do banco
         type: type as any,
         summary,
         content,
