@@ -42,8 +42,7 @@ model Session {
 model Proposal {
   id                String           @id @default(uuid())
   type              ProposalType     // Ex: INDICACAO, REQUERIMENTO, PROJETO_LEI
-  summary           String           // Resumo/Ementa original enviada pelo parlamentar
-  content           String           // Texto completo
+  summary           String           // Resumo/Ementa enviada pelo parlamentar
   status            ProposalStatus   @default(PENDENTE) // PENDENTE, PROTOCOLADA, REJEITADA
   protocolNumber    String?          @unique // Ex: IND-001/2026 gerado automaticamente
   officialEmenta    String?          // Ementa revisada pelo ADMIN no protocolo
