@@ -42,7 +42,6 @@ export async function logoutAction() {
   cookieStore.delete('token')
   redirect('/login')
 }
-
 export async function createParliamentarianAction(formData: FormData) {
   const name = (formData.get('fullName') || formData.get('name')) as string
   const school = formData.get('school') as string
@@ -61,15 +60,18 @@ export async function createParliamentarianAction(formData: FormData) {
         username,
         password: hashedPassword,
         role: 'PARLIAMENTARIAN',
+        active: true,
         parliamentarian: {
           create: {
-            name,
+            fullName: name, // Preenche o fullName que o banco exibe no print
+            name: name,     // Preenche o name também por garantia
             school
           }
         }
       }
     })
-  } catch (error) {
+  } catch (error: any) {
+    console.error("Erro detalhado:", error)
     redirect('/admin/parlamentares/novo?error=Erro ao cadastrar. O nome de usuario ja pode estar em uso.')
   }
 
